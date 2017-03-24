@@ -35,9 +35,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="AsyncCache.cs" />
+    <Compile Include="AsyncCacheWithTimeStamp.cs" />
     <Compile Include="Client.cs" />
     <Compile Include="HttpClientWrapper.cs" />
-    <Compile Include="HttpDescriptor.cs" />
+    <Compile Include="HttpDescriptorRequest.cs" />
     <Compile Include="HttpDescriptorBase.cs" />
     <Compile Include="HttpDescriptorResponse.cs" />
     <Compile Include="IHttpClient.cs" />

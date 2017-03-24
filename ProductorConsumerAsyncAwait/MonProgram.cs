@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
+using System.Net.Http;
 using System.Threading.Tasks;
 using AsynchronousCache;
 
@@ -9,47 +8,36 @@ namespace ProductorConsumerAsyncAwait
 {
     public class MonProgram
     {
-        private HttpDescriptor GoogleHttpDescriptor = new HttpDescriptor
-        {
-            CacheDurationInSeconds = 100,
-            Url = "https://www.google.fr/"
-        };
+        private readonly HttpDescriptorRequest _googleHttpDescriptorRequest = new HttpDescriptorRequest(HttpMethod.Get,
+            "https://www.google.fr/", 100);
 
-        private HttpDescriptor MsdnHttpDescriptor = new HttpDescriptor
-        {
-            CacheDurationInSeconds = 1,
-            Url = "https://msdn.microsoft.com/fr-fr/library/system.threading.tasks.dataflow(v=vs.110).aspx"
-        };
+        private readonly HttpDescriptorRequest _msdnHttpDescriptorRequest = new HttpDescriptorRequest(HttpMethod.Get,
+            "https://msdn.microsoft.com/fr-fr/library/system.threading.tasks.dataflow(v=vs.110).aspx", 1);
 
         public async Task Start()
         {
-            var httpRequestList = new List<HttpDescriptor>
+            var httpRequestList = new List<HttpDescriptorRequest>
             {
-                GoogleHttpDescriptor,
-                MsdnHttpDescriptor,
-                GoogleHttpDescriptor,
-                MsdnHttpDescriptor,
-                MsdnHttpDescriptor,
-                MsdnHttpDescriptor,
+                _googleHttpDescriptorRequest,
+                _msdnHttpDescriptorRequest,
+                _googleHttpDescriptorRequest,
+                _msdnHttpDescriptorRequest,
+                _msdnHttpDescriptorRequest,
+                _msdnHttpDescriptorRequest,
             };
 
-            // var httpRequester = new HttpRequester();
-            //var applicationRequests = new ApplicationRequests();
-            //var cacheUsage = new AsyncCacheWithTimeStamp(new HttpClientWrapper());
-            var client  = new Client(new Logger(), new HttpClientWrapper());
+            var client = new Client(new Logger(), new HttpClientWrapper());
 
             Console.WriteLine("First group");
             client.ManyCalls(httpRequestList);
 
             PrintStatus();
-            Console.WriteLine("Wait for 10 sec");
+            Console.WriteLine("Waiting");
 
-            using (var cts = new CancellationTokenSource(25 * 1000))
-            {
-                var waitingTask = client.ItIsAlive(cts.Token);
-                Task.WaitAny(Task.Delay(10 * 1000), waitingTask);
-                cts.Cancel();
-            }
+            var minduration = Math.Min(_googleHttpDescriptorRequest.CacheDurationInSeconds,
+                _msdnHttpDescriptorRequest.CacheDurationInSeconds);
+
+            await client.ItIsAlive(minduration * 1000 + 10);
 
             Console.WriteLine("Second group");
             client.ManyCalls(httpRequestList);

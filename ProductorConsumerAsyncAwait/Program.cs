@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Net.Http;
-using System.Threading.Tasks;
 
 namespace ProductorConsumerAsyncAwait
 {
@@ -9,7 +8,7 @@ namespace ProductorConsumerAsyncAwait
         static void Main(string[] args)
         {
             var monProgram = new MonProgram();
-            Task.WaitAll(monProgram.Start());
+            monProgram.Start();
             Console.ReadLine();
         }
     }
