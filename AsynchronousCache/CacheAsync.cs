@@ -4,14 +4,14 @@ using System.Threading.Tasks;
 
 namespace AsynchronousCache
 {
-    public class AsyncCache<TKey, TValue>
+    public class CacheAsync<TKey, TValue>
     {
         private readonly Func<TKey, Task<TValue>> _valueFactory;
         private readonly ConcurrentDictionary<TKey, Lazy<Task<TValue>>> _map;
 
         public int Count => _map?.Count ?? 0;
 
-        public AsyncCache(Func<TKey, Task<TValue>> valueFactory)
+        public CacheAsync(Func<TKey, Task<TValue>> valueFactory)
         {
             if (valueFactory == null)
                 throw new ArgumentNullException("loader");

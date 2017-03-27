@@ -34,14 +34,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="AsyncCache.cs" />
-    <Compile Include="AsyncCacheWithTimeStamp.cs" />
+    <Compile Include="CacheAsync.cs" />
+    <Compile Include="TimeStampedCacheAsync.cs" />
     <Compile Include="Client.cs" />
-    <Compile Include="HttpClientWrapper.cs" />
-    <Compile Include="HttpDescriptorRequest.cs" />
-    <Compile Include="HttpDescriptorBase.cs" />
-    <Compile Include="HttpDescriptorResponse.cs" />
-    <Compile Include="IHttpClient.cs" />
+    <Compile Include="HttpClient\HttpClientWrapper.cs" />
+    <Compile Include="Descriptors\HttpRequestDescriptor.cs" />
+    <Compile Include="Descriptors\HttpBaseDescriptor.cs" />
+    <Compile Include="Descriptors\HttpResponseDescriptor.cs" />
+    <Compile Include="HttpClient\IHttpClient.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="Measures.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

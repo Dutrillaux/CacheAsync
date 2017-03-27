@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Net.Http;
 
-namespace AsynchronousCache
+namespace AsynchronousCache.Descriptors
 {
-    public class HttpDescriptorResponse
+    public class HttpResponseDescriptor
     {
         public string Json;
         public HttpResponseMessage HttpResponseMessage;

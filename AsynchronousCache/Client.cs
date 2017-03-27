@@ -1,84 +1,50 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
+using AsynchronousCache.Descriptors;
+using AsynchronousCache.HttpClient;
 
 namespace AsynchronousCache
 {
     public class Client
     {
         private readonly ILogger _logger;
-        public readonly AsyncCacheWithTimeStamp AsyncCacheWithTimeStamp;
+        public readonly TimeStampedCacheAsync TimeStampedCacheAsync;
 
         public Client(ILogger logger, IHttpClient httpClient)
         {
             _logger = logger;
-            AsyncCacheWithTimeStamp = new AsyncCacheWithTimeStamp(httpClient, _logger);
+            TimeStampedCacheAsync = new TimeStampedCacheAsync(httpClient, _logger);
         }
 
-        public void ManyCalls(IEnumerable<HttpDescriptorRequest> httpRequestList)
+        public async Task ProceedManySimultaneaousCalls(IEnumerable<HttpBaseRequestDescriptor> httpRequestList)
         {
-            using (var cts = new CancellationTokenSource(25 * 1000))
-            {
-                var tasks = httpRequestList.Select(GetUrlAsyncOnAnotherThread);
-                var waitingTask = ItIsAlive(cts.Token);
-                Task.WaitAny(Task.WhenAll(tasks), waitingTask);
-                cts.Cancel();
-            }
+            var tasks = httpRequestList.Select(GetHttpResponseOnAnotherThreadAsync);
+            await Task.WhenAll(tasks);
         }
 
-        public async Task ItIsAlive()
+        private Task<HttpResponseDescriptor> GetHttpResponseOnAnotherThreadAsync(HttpBaseRequestDescriptor httpBaseRequest)
         {
-            _logger.DebugLog(".");
-            while (true)
-            {
-                _logger.DebugLog(".");
-                await Task.Delay(500).ConfigureAwait(false);
-            }
+            return Task.Run(() => GetHttpResponseAsync(httpBaseRequest));
         }
 
-        public async Task ItIsAlive(CancellationToken cancellationToken)
-        {
-            _logger.DebugLog(".");
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                _logger.DebugLog(".");
-                await Task.Delay(500, cancellationToken).ConfigureAwait(false);
-            }
-        }
-
-        public async Task ItIsAlive(int timeoutInMilliseconds)
-        {
-            var endDateTime = DateTime.Now.AddMilliseconds(timeoutInMilliseconds);
-            while (endDateTime > DateTime.Now)
-            {
-                _logger.DebugLog(".");
-                await Task.Delay(250).ConfigureAwait(false);
-            }
-        }
-
-        private Task<HttpDescriptorResponse> GetUrlAsyncOnAnotherThread(HttpDescriptorRequest httpRequest)
-        {
-            return Task.Run(() => GetUrlAsync(httpRequest));
-        }
-
-        private async Task<HttpDescriptorResponse> GetUrlAsync(HttpDescriptorRequest httpRequest)
+        private async Task<HttpResponseDescriptor> GetHttpResponseAsync(HttpBaseRequestDescriptor httpBaseRequest)
         {
             Measures.GetAttempt++;
-            _logger.DebugLog($"GetUrl() for {httpRequest.RequestUri}");
+            _logger.DebugLog($"GetHttpResponseAsync() for {httpBaseRequest.RequestUri}");
 
             try
             {
-                if (!await httpRequest.SemaphoreSlim.WaitAsync(25 * 1000, httpRequest.CancellationToken))
+                if (!await httpBaseRequest.SemaphoreSlim.WaitAsync(25 * 1000, httpBaseRequest.CancellationToken))
                 {
-                    _logger.DebugLog($"Timeout for url '{httpRequest.RequestUri}' ");
-                    return default(HttpDescriptorResponse);
+                    _logger.DebugLog($"Timeout on GetHttpResponseAsync for '{httpBaseRequest.RequestUri}' ");
+                    return default(HttpResponseDescriptor);
                 }
                 else
                 {
-                    _logger.DebugLog($"Http request started for url '{httpRequest}' ");
-                    return await AsyncCacheWithTimeStamp[httpRequest];
+                    _logger.DebugLog($"Http GetHttpResponseAsync started for url '{ httpBaseRequest.RequestUri }' ");
+                    return await TimeStampedCacheAsync[httpBaseRequest];
                 }
             }
             catch (Exception ex)
@@ -87,10 +53,12 @@ namespace AsynchronousCache
             }
             finally
             {
-                httpRequest.SemaphoreSlim.Release();
+                if (httpBaseRequest.SemaphoreSlim.CurrentCount < HttpBaseDescriptor.SemaphoreSlimMaxCount)
+                    httpBaseRequest.SemaphoreSlim.Release();
             }
-            _logger.DebugLog($"Http request ended for url '{httpRequest}' ");
-            return default(HttpDescriptorResponse);
+            _logger.DebugLog($"Http GetHttpResponseAsync ended for url '{ httpBaseRequest.RequestUri }' ");
+
+            return default(HttpResponseDescriptor);
         }
     }
 }

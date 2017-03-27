@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AsynchronousCache
+namespace AsynchronousCache.HttpClient
 {
     public interface IHttpClient
     {
